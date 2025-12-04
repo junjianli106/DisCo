@@ -1,0 +1,53 @@
+General:
+    comment: MiCo
+    seed: 2024
+    fp16: true
+    amp_level: O2
+    precision: 16
+    multi_gpu_mode: dp
+    gpus:
+    - 0
+    epochs: 200
+    grad_acc: 2
+    frozen_bn: false
+    patience: 8
+    server: test
+    log_path: ./logs/
+
+Data:
+    dataset_name: prog_data
+    data_dir:  /home/lijunjian/data/TCGA/Feats/TCGA-BLCA/feats-m20-s448-conch_v1_5/pt_files/
+    data5x_dir:  /home/lijunjian/data/TCGA/Feats/TCGA-BLCA/feats-m20-s256-resnet50_trunc/pt_files/
+    label_dir: splits/4foldcv/tcga_blca/
+    fold: 1
+    nfold: 4
+    train_dataloader:
+        batch_size: 1
+        num_workers: 8
+    test_dataloader:
+        batch_size: 1
+        num_workers: 8
+
+Model:
+    name: DisCo
+    n_classes: 4
+    gate: true
+    survival: true
+    dim_in: 768
+    num_clusters: 64
+    num_enhancers: 3
+    lambda_link: 0.5
+    lambda_ent: 0.1
+    drop: 0.05
+    cluster_init_path: './cluster_centers/BLCA_C_cluster_num_init.pt'
+
+Optimizer:
+    opt: lookahead_radam
+    lr: 0.0002
+    opt_eps: null
+    opt_betas: null
+    momentum: null
+    weight_decay: 1.0e-05
+
+Loss:
+    alpha_surv: 0.0
