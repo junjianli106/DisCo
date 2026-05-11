@@ -19,6 +19,8 @@ def parse_arguments():
     parser.add_argument('--config', default='', type=str)
     parser.add_argument('--gpus', default=[0])
     parser.add_argument('--fold', default=2)
+    parser.add_argument('--use_nonnegative_cosine_adj', action='store_true',
+                        help='Use max(0, cosine_similarity) when building the reducer adjacency.')
     return parser.parse_args()
 
 def initialize_trainer(cfg):
@@ -88,6 +90,9 @@ if __name__ == '__main__':
     cfg.General.gpus = args.gpus
     cfg.General.server = args.stage
     cfg.Data.fold = args.fold
+
+    if args.use_nonnegative_cosine_adj:
+        cfg.Model.use_nonnegative_cosine_adj = True
 
     if 'NSCLC' in cfg.Data.data_dir and args.task == 'cls':
         cfg.Model.cluster_init_path = cfg.Data.cluster_init_path.replace('NSCLC', 'LUAD')

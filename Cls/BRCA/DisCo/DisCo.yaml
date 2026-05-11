@@ -35,6 +35,7 @@ Model:
     dim_in: 768
     lambda_link: 0.5
     lambda_ent: 0.1
+    use_nonnegative_cosine_adj: false
     num_clusters: 64
     num_enhancers: 3
     drop: 0.05

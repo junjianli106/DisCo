@@ -151,10 +151,11 @@ class GNN(nn.Module):
 class LearnableClusterReducer(nn.Module):
     """通过可学习的图池化 (DiffPool) 来归约簇中心。"""
 
-    def __init__(self, in_features: int, out_features: int):
+    def __init__(self, in_features: int, out_features: int, use_nonnegative_cosine_adj: bool = False):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features  # K/2
+        self.use_nonnegative_cosine_adj = use_nonnegative_cosine_adj
 
         # 嵌入GNN (学习用于计算新簇特征的节点嵌入)
         self.gnn_embed = GNN(in_features, in_features, in_features)
@@ -173,6 +174,8 @@ class LearnableClusterReducer(nn.Module):
 
         # 1. 动态构建图邻接矩阵 (Adjacency Matrix)
         adj = F.cosine_similarity(x.unsqueeze(1), x.unsqueeze(0), dim=2)
+        if self.use_nonnegative_cosine_adj:
+            adj = adj.clamp_min(0.0)
         adj.fill_diagonal_(1.0)  # 添加自环
 
         # 2. 通过 GNN 计算嵌入和分配矩阵
@@ -207,6 +210,7 @@ class DisCo(nn.Module):
                  lambda_ent=0.1,
                  hard=False,
                  similarity_method='l2',
+                 use_nonnegative_cosine_adj=False,
                  use_cluster_reducer=True,
                  use_cluster_router=True,
                  use_inter_cluster_transformer=True):
@@ -217,6 +221,7 @@ class DisCo(nn.Module):
         self.similarity_method = similarity_method
         self.embedding_dim = embedding_dim
         self.num_clusters = num_clusters
+        self.use_nonnegative_cosine_adj = use_nonnegative_cosine_adj
         self.use_cluster_reducer = use_cluster_reducer
         self.use_cluster_router = use_cluster_router
         self.use_inter_cluster_transformer = use_inter_cluster_transformer
@@ -225,6 +230,7 @@ class DisCo(nn.Module):
 
         print(f"Initializing eMiCo model with:")
         print(f'  - lambda_link: {lambda_link}, lambda_ent: {lambda_ent}')
+        print(f"  - use_nonnegative_cosine_adj: {self.use_nonnegative_cosine_adj}")
         print(f"  - use_cluster_reducer: {self.use_cluster_reducer} (Using Learnable DiffPool)")
         print(f"  - use_cluster_router: {self.use_cluster_router}")
         print(f"  - use_inter_cluster_transformer: {self.use_inter_cluster_transformer}")
@@ -265,7 +271,8 @@ class DisCo(nn.Module):
             self.cluster_reducers = nn.ModuleList([
                 LearnableClusterReducer(
                     in_features=embedding_dim,
-                    out_features=self.dynamic_num_clusters[i + 1]
+                    out_features=self.dynamic_num_clusters[i + 1],
+                    use_nonnegative_cosine_adj=self.use_nonnegative_cosine_adj
                 ) for i in range(num_enhancers)
             ])
 

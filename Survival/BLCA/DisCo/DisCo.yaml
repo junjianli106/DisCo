@@ -38,6 +38,7 @@ Model:
     num_enhancers: 3
     lambda_link: 0.5
     lambda_ent: 0.1
+    use_nonnegative_cosine_adj: false
     drop: 0.05
     cluster_init_path: './cluster_centers/BLCA_C_cluster_num_init.pt'
 
